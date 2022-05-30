@@ -5,7 +5,7 @@ const SCRAM256Authenticator = require('./scram256')
 const SCRAM512Authenticator = require('./scram512')
 const AWSIAMAuthenticator = require('./awsIam')
 const OAuthBearerAuthenticator = require('./oauthBearer')
-const { KafkaJSSASLAuthenticationError } = require('../../errors')
+const { KafkaJSSASLAuthenticationError, KafkaJSAuthenticationMechanismError } = require('../../errors')
 
 const AUTHENTICATORS = {
   PLAIN: PlainAuthenticator,
@@ -19,6 +19,18 @@ const SUPPORTED_MECHANISMS = Object.keys(AUTHENTICATORS)
 const UNLIMITED_SESSION_LIFETIME = '0'
 
 module.exports = class SASLAuthenticator {
+
+  static registerAuthenticationMechanism(type, mechanism) {
+    const upperCaseType = type.toUpperCase()
+  
+    if (SUPPORTED_MECHANISMS.includes(upperCaseType)) {
+      throw new KafkaJSAuthenticationMechanismError()
+    }
+  
+    AUTHENTICATORS[upperCaseType] = mechanism;
+    SUPPORTED_MECHANISMS.push(upperCaseType)
+  }
+
   constructor(connection, logger, versions, supportAuthenticationProtocol) {
     this.connection = connection
     this.logger = logger
