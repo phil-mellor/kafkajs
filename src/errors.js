@@ -248,8 +248,6 @@ class KafkaJSAggregateError extends Error {
 
 class KafkaJSFetcherRebalanceError extends Error {}
 
-class KafkaJSAuthenticationMechanismError extends Error {}
-
 const isRebalancing = e =>
   e.type === 'REBALANCE_IN_PROGRESS' || e.type === 'NOT_COORDINATOR_FOR_GROUP'
 

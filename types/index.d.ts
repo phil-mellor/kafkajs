@@ -45,6 +45,88 @@ export interface OauthbearerProviderResponse {
   value: string
 }
 
+export class Long {
+  protected value: bigint;
+  isZero(): boolean;
+  isNegative(): boolean;
+  toString(): string;
+  toNumber(): Number;
+  toInt(): Number;
+  toJSON(): string;
+  shiftLeft(numBits: number|bigint) : Long;
+  shiftRight(numBits: number|bigint) : Long;
+  shiftRightUnsigned(numBits: number|bigint) : Long;
+  or(other: number|bigint|string|Long) : Long;
+  xor(other: number|bigint|string|Long) : Long;
+  and(other: number|bigint|string|Long) : Long;
+  not() : Long;
+  equals(other: number|bigint|string|Long) : boolean;
+  greaterThanOrEqual(other: number|bigint|string|Long) : boolean
+  gte(other: number|bigint|string|Long) : boolean;
+  notEquals(other: number|bigint|string|Long) : boolean;
+  add(addend: number|bigint|string|Long) : Long;
+  subtract(subtrahend: number|bigint|string|Long) : Long;
+  multiply(multiplier: number|bigint|string|Long) : Long;
+  divide(divisor: number|bigint|string|Long) : Long;
+  compare(other: number|bigint|string|Long) : -1 | 0 | 1;
+  lessThan(other: number|bigint|string|Long) : boolean;
+  negate() : boolean;
+  getHighBits() : number;
+  getLowBits() : number;
+  static MIN_VALUE: Long;
+  static MAX_VALUE: Long;
+  static ZERO: Long;
+  static ONE: Long;
+  static isLong(): boolean;
+  static fromBits(value: number) : Long;
+  static fromInt(value: number) : Long;
+  static fromNumber(value: number) : Long;
+  static fromValue(value: number|bigint|string|Long) : Long;
+  static fromString(value: string) : Long;
+}
+
+export class Encoder {
+  protected buf: Buffer;
+  protected offset: number;
+  get buffer() : Buffer;
+  writeInt8(value: number) : Encoder;
+  writeInt16(value: number) : Encoder;
+  writeInt32(value: number) : Encoder;
+  writeUInt32(value: number) : Encoder;
+  writeInt64(value: bigint | number | string | Long) : Encoder;
+  writeDouble(value: number) : Encoder;
+  writeBoolean(value: boolean) : Encoder;
+  writeString(value: string | null) : Encoder;
+  writeVarIntString(value: string | null) : Encoder;
+  writeUVarIntString(value: string | null) : Encoder;
+  writeBytes(value: Buffer | any | null) : Encoder;
+  writeVarIntBytes(value: Buffer | any | null) : Encoder;
+  writeUVarIntBytes(value: Buffer | any | null) : Encoder;
+  writeEncoder(value: Encoder) : Encoder;
+  writeEncoderArray(value: Encoder[]) : Encoder;
+  writeBuffer(value: Buffer) : Encoder;
+  writeNullableArray(array: any[], type: 'int32'|'number'|'string'|'object') : Encoder;
+  writeArray(array: any[], type: 'int32'|'number'|'string'|'object', length: number) : Encoder;
+  writeVarIntArray(array: any[], type: 'int32'|'number'|'string'|'object') : Encoder;
+  writeUVarIntArray(array: any[], type: 'int32'|'number'|'string'|'object') : Encoder;
+  writeVarInt(value: any) : Encoder;
+  writeUVarInt(value: any) : Encoder;
+  writeUVarInt(value: any) : Encoder;
+  writeVarLong(value: any) : Encoder;
+  size() : number;
+  toJSON() : string;
+}
+
+type SASLCustomMechanism = {
+  request: () => { 
+    encode: () => Promise<Encoder> 
+  }
+  response: <T>() => { 
+    decode: (rawData: Buffer) => Promise<T>
+    parse: (decoded: T) => Promise<void>
+  }
+}
+
 type SASLMechanismOptionsMap = {
   plain: { username: string; password: string }
   'scram-sha-256': { username: string; password: string }
@@ -55,6 +137,7 @@ type SASLMechanismOptionsMap = {
     secretAccessKey: string
     sessionToken?: string
   }
+  'custom': SASLCustomMechanism,
   oauthbearer: { oauthBearerProvider: () => Promise<OauthbearerProviderResponse> }
 }
 
@@ -1211,3 +1294,11 @@ export interface KafkaJSServerDoesNotSupportApiKeyMetadata {
   apiKey: number
   apiName: string
 }
+
+export interface IAuthenticator {
+  authenticate() : Promise<void>
+}
+
+export type Authenticator = new(connection: any, logger: Logger, saslAuthenticate: any ) => IAuthenticator
+
+export function registerAuthenticator(mechanism: string, constructor: Authenticator) : void;
