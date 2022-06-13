@@ -213,6 +213,8 @@ module.exports = class Connection {
         })
 
         this.logError(error.message, { stack: e.stack })
+        console.log(e)
+
         this.rejectRequests(error)
         await this.disconnect()
 
@@ -249,6 +251,7 @@ module.exports = class Connection {
           onTimeout,
         })
       } catch (e) {
+        console.log(e)
         clearTimeout(timeoutId)
         reject(
           new KafkaJSConnectionError(`Failed to connect: ${e.message}`, {
@@ -525,6 +528,9 @@ module.exports = class Connection {
 
       const correlationId = response.readInt32()
       const payload = response.readAll()
+
+      console.log(correlationId)
+      console.log(payload)
 
       this.requestQueue.fulfillRequest({
         size: expectedResponseSize,
