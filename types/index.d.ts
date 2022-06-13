@@ -117,13 +117,29 @@ export class Encoder {
   toJSON() : string;
 }
 
-type SASLCustomMechanism = {
-  request: () => { 
-    encode: () => Promise<Encoder> 
+interface IKafkaCustomProtocol {
+  authExpectResponse: boolean;
+  request(connection: { host: string, port: number }) : Promise<{
+    encode() : Promise<{ buffer: Buffer }>
+  }>
+}
+
+export interface IKafkaCustomProtocolNoResponse extends IKafkaCustomProtocol {
+  authExpectResponse: false;
+}
+
+export interface IKafkaCustomProtocolExpectsResponse extends IKafkaCustomProtocol {
+  authExpectResponse: true;
+  response() : {
+    decode(rawData: Buffer) : Promise<any>
+    parse(parsed: any) : Promise<void>
   }
-  response: <T>() => { 
-    decode: (rawData: Buffer) => Promise<T>
-    parse: (decoded: T) => Promise<void>
+}
+
+export interface IKafkaCustomProtocolExpectsResponseTyped<TDecoded> extends IKafkaCustomProtocolExpectsResponse {
+  response() : {
+    decode(rawData: Buffer) : Promise<TDecoded>
+    parse(parsed: TDecoded) : Promise<void>
   }
 }
 
@@ -137,7 +153,9 @@ type SASLMechanismOptionsMap = {
     secretAccessKey: string
     sessionToken?: string
   }
-  'custom': SASLCustomMechanism,
+  'aws_msk_iam': {
+    protocol: IKafkaCustomProtocolNoResponse | IKafkaCustomProtocolExpectsResponse
+  },
   oauthbearer: { oauthBearerProvider: () => Promise<OauthbearerProviderResponse> }
 }
 
@@ -1294,11 +1312,3 @@ export interface KafkaJSServerDoesNotSupportApiKeyMetadata {
   apiKey: number
   apiName: string
 }
-
-export interface IAuthenticator {
-  authenticate() : Promise<void>
-}
-
-export type Authenticator = new(connection: any, logger: Logger, saslAuthenticate: any ) => IAuthenticator
-
-export function registerAuthenticator(mechanism: string, constructor: Authenticator) : void;

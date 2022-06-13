@@ -5,7 +5,7 @@ const SCRAM256Authenticator = require('./scram256')
 const SCRAM512Authenticator = require('./scram512')
 const AWSIAMAuthenticator = require('./awsIam')
 const OAuthBearerAuthenticator = require('./oauthBearer')
-const CustomAuthenticator = require('./custom')
+const AWSMSKIAMAuthenticator = require('./custom')
 const { KafkaJSSASLAuthenticationError } = require('../../errors')
 
 const AUTHENTICATORS = {
@@ -14,7 +14,7 @@ const AUTHENTICATORS = {
   'SCRAM-SHA-512': SCRAM512Authenticator,
   AWS: AWSIAMAuthenticator,
   OAUTHBEARER: OAuthBearerAuthenticator,
-  CUSTOM: CustomAuthenticator,
+  AWS_MSK_IAM: AWSMSKIAMAuthenticator,
 }
 
 const SUPPORTED_MECHANISMS = Object.keys(AUTHENTICATORS)
@@ -41,12 +41,18 @@ module.exports = class SASLAuthenticator {
       )
     }
 
+    console.log('mechanism')
+    console.log(mechanism)
+
     const handshake = await this.connection.send(this.saslHandshake({ mechanism }))
     if (!handshake.enabledMechanisms.includes(mechanism)) {
       throw new KafkaJSSASLAuthenticationError(
         `SASL ${mechanism} mechanism is not supported by the server`
       )
     }
+
+    console.log('handshake')
+    console.log(handshake)
 
     const saslAuthenticate = async ({ request, response, authExpectResponse }) => {
       if (this.protocolAuthentication) {

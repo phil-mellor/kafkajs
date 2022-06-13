@@ -283,7 +283,6 @@ module.exports = {
   KafkaJSCreateTopicError,
   KafkaJSAggregateError,
   KafkaJSFetcherRebalanceError,
-  KafkaJSAuthenticationMechanismError,
   isRebalancing,
   isKafkaJSError,
 }

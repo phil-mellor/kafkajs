@@ -9,26 +9,36 @@ module.exports = class CustomAuthenticator {
 
   async authenticate() {
     const { sasl } = this.connection
+    console.log(JSON.stringify(sasl))
+    console.log(sasl.protocol)
+    console.log(sasl.protocol?.request)
+    console.log(typeof sasl.protocol?.request)
+    console.log(sasl.protocol?.response)
+    console.log(typeof sasl.protocol?.response)
+    if (!sasl.protocol || typeof sasl.protocol.request !== 'function') {
+      throw new KafkaJSSASLAuthenticationError(
+        'SASL Custom: Invalid protocol request or response handler'
+      )
+    }
     if (
-      !sasl.protocol ||
-      typeof sasl.protocol.request !== 'function' ||
-      typeof sasl.protocol.response !== 'function'
+      !sasl.protocol.authExpectResponse &&
+      (!sasl.protocol.response || typeof sasl.protocol.response !== 'function')
     ) {
       throw new KafkaJSSASLAuthenticationError(
         'SASL Custom: Invalid protocol request or response handler'
       )
     }
 
-    const request = sasl.protocol.request()
-    const response = sasl.protocol.response
+    const request = await sasl.protocol.request(this.connection)
+    const response = sasl.protocol.authExpectResponse ? sasl.protocol.response() : undefined
 
     const { host, port } = this.connection
     const broker = `${host}:${port}`
 
     try {
-      this.logger.debug('Authenticate with SASL PLAIN', { broker })
+      this.logger.debug('Authenticate with SASL CUSTOM', { broker })
       await this.saslAuthenticate({ request, response })
-      this.logger.debug('SASL PLAIN authentication successful', { broker })
+      this.logger.debug('SASL CUSTOM authentication successful', { broker })
     } catch (e) {
       const error = new KafkaJSSASLAuthenticationError(
         `SASL CUSTOM authentication failed: ${e.message}`
